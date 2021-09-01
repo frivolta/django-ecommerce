@@ -8,10 +8,9 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-
-# from orders.models import Order
-# from orders.views import user_orders
 from ecommerce.apps.catalogue.models import Product
+from ecommerce.apps.orders.models import Order
+from ecommerce.apps.orders.views import user_orders
 
 from .forms import RegistrationForm, UserAddressForm, UserEditForm
 from .models import Address, Customer
@@ -29,10 +28,12 @@ def add_to_wishlist(request, id):
     product = get_object_or_404(Product, id=id)
     if product.users_wishlist.filter(id=request.user.id).exists():
         product.users_wishlist.remove(request.user)
-        messages.success(request, product.title + " has been removed from your WishList")
+        messages.success(request, product.title +
+                         " has been removed from your WishList")
     else:
         product.users_wishlist.add(request.user)
-        messages.success(request, "Added " + product.title + " to your WishList")
+        messages.success(request, "Added " +
+                         product.title + " to your WishList")
     return HttpResponseRedirect(request.META["HTTP_REFERER"])
 
 
@@ -90,6 +91,8 @@ def account_register(request):
             )
             user.email_user(subject=subject, message=message)
             return render(request, "account/registration/register_email_confirm.html", {"form": registerForm})
+        else:
+            return HttpResponse("Error handler content", status=400)
     else:
         registerForm = RegistrationForm()
     return render(request, "account/registration/register.html", {"form": registerForm})
@@ -128,6 +131,8 @@ def add_address(request):
             address_form.customer = request.user
             address_form.save()
             return HttpResponseRedirect(reverse("account:addresses"))
+        else:
+            return HttpResponse("Error handler content", status=400)
     else:
         address_form = UserAddressForm()
     return render(request, "account/dashboard/edit_addresses.html", {"form": address_form})
@@ -155,7 +160,8 @@ def delete_address(request, id):
 
 @login_required
 def set_default(request, id):
-    Address.objects.filter(customer=request.user, default=True).update(default=False)
+    Address.objects.filter(customer=request.user,
+                           default=True).update(default=False)
     Address.objects.filter(pk=id, customer=request.user).update(default=True)
 
     previous_url = request.META.get("HTTP_REFERER")
